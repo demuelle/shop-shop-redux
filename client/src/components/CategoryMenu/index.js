@@ -1,28 +1,31 @@
-import React, { useEffect } from 'react';
-import { useQuery } from '@apollo/client';
+import React, { useEffect } from "react";
+import { useQuery } from "@apollo/client";
 
 import { idbPromise } from "../../utils/helpers";
 
-import { QUERY_CATEGORIES } from '../../utils/queries';
-import { UPDATE_CATEGORIES, UPDATE_CURRENT_CATEGORY } from '../../utils/actions';
-import { useStoreContext } from '../../utils/GlobalState';
+import { QUERY_CATEGORIES } from "../../utils/queries";
+import {
+  UPDATE_CATEGORIES,
+  UPDATE_CURRENT_CATEGORY,
+} from "../../utils/actions";
+
+import { useSelector, useDispatch } from "react-redux";
 
 function CategoryMenu() {
+  const dispatch = useDispatch();
+  const categories = useSelector(state => state.categories.names)
 
-  const [state, dispatch] = useStoreContext();
-  const { categories }  = state;
   const { loading, data: categoryData } = useQuery(QUERY_CATEGORIES);
 
-  useEffect (() => {
+  useEffect(() => {
     // if categoryData exists or has changed from the response of useQuery, then run dispatch()
     if (categoryData) {
       // execute our dispatch function with our action object indicating the type of action and the data to set our state for categories to
       dispatch({
         type: UPDATE_CATEGORIES,
-        categories:categoryData.categories
-      })
+        payload: categoryData.categories,
+      });
       // but let's also take each product and save it to IndexedDB using the helper function
-      let i = 0;
       categoryData.categories.forEach((category) => {
         idbPromise("categories", "put", category);
       });
@@ -32,18 +35,18 @@ function CategoryMenu() {
         // use retrieved data to set global state for offline browsing
         dispatch({
           type: UPDATE_CATEGORIES,
-          categories: categories,
+          payload: categories,
         });
       });
     }
   }, [categoryData, loading, dispatch]);
 
-  const handleClick = id => {
+  const handleClick = (id) => {
     dispatch({
       type: UPDATE_CURRENT_CATEGORY,
-      currentCategory: id
-    })
-  }
+      payload: id,
+    });
+  };
 
   return (
     <div>

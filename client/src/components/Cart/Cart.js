@@ -5,7 +5,7 @@ import { useLazyQuery } from '@apollo/client';
 import { idbPromise } from "../../utils/helpers";
 
 import { QUERY_CHECKOUT } from '../../utils/queries';
-import { useStoreContext } from "../../utils/GlobalState";
+import { useSelector, useDispatch } from "react-redux"
 import { TOGGLE_CART, ADD_MULTIPLE_TO_CART } from "../../utils/actions";
 
 import CartItem from "../CartItem/CartItem";
@@ -15,19 +15,22 @@ import "./Cart.css";
 const stripePromise = loadStripe('pk_test_TYooMQauvdEDq54NiTphI7jx');
 
 const Cart = () => {
-  const [state, dispatch] = useStoreContext();
+  const dispatch = useDispatch()
+  const cartItems = useSelector(state => state.cart.items)
+  const cartOpen = useSelector(state => state.cart.open)
+
   const [getCheckout, { data }] = useLazyQuery(QUERY_CHECKOUT);
 
   useEffect(() => {
     async function getCart() {
       const cart = await idbPromise('cart', 'get');
-      dispatch({ type: ADD_MULTIPLE_TO_CART, products: [...cart] });
+      dispatch({ type: ADD_MULTIPLE_TO_CART, payload: [...cart] });
     };
   
-    if (!state.cart.length) {
+    if (!cartItems.length) {
       getCart();
     }
-  }, [state.cart.length, dispatch]);
+  }, [cartItems.length, dispatch]);
 
   useEffect(() => {
     if (data) {
@@ -43,7 +46,7 @@ const Cart = () => {
 
   function calculateTotal() {
     let sum = 0;
-    state.cart.forEach((item) => {
+    cartItems.forEach((item) => {
       sum += item.price * item.purchaseQuantity;
     });
     return sum.toFixed(2);
@@ -52,7 +55,7 @@ const Cart = () => {
   function submitCheckout() {
     const productIds = [];
 
-    state.cart.forEach((item) => {
+    cartItems.forEach((item) => {
       for (let i = 0; i < item.purchaseQuantity; i++) {
         productIds.push(item._id);
       }
@@ -63,7 +66,7 @@ const Cart = () => {
     });
   }
 
-  if (!state.cartOpen) {
+  if (!cartOpen) {
     return (
       <div className="cart-closed" onClick={toggleCart}>
         <span role="img" aria-label="cart">
@@ -78,9 +81,9 @@ const Cart = () => {
         [close]
       </div>
       <h2>Shopping Cart</h2>
-      {state.cart.length ? (
+      {cartItems.length ? (
         <div>
-          {state.cart.map((item) => (
+          {cartItems.map((item) => (
             <CartItem key={item._id} item={item} />
           ))}
           <div className="flex-row space-between">

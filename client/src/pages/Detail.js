@@ -4,7 +4,8 @@ import { useQuery } from "@apollo/client";
 
 import { idbPromise } from "../utils/helpers";
 
-import { useStoreContext } from "../utils/GlobalState";
+import { useSelector, useDispatch } from "react-redux";
+
 import {
   REMOVE_FROM_CART,
   UPDATE_CART_QUANTITY,
@@ -17,14 +18,15 @@ import spinner from "../assets/spinner.gif";
 import Cart from "../components/Cart/Cart";
 
 function Detail() {
-  const [state, dispatch] = useStoreContext();
+  const products = useSelector(state => state.products);
+  const cart = useSelector(state => state.cart.items)
+  const dispatch = useDispatch();
+
   const { id } = useParams();
 
   const [currentProduct, setCurrentProduct] = useState({});
 
   const { loading, data } = useQuery(QUERY_PRODUCTS);
-
-  const { products, cart } = state;
 
   useEffect(() => {
     if (products.length) {
@@ -32,7 +34,7 @@ function Detail() {
     } else if (data) {
       dispatch({
         type: UPDATE_PRODUCTS,
-        products: data.products,
+        payload: data.products,
       });
     }
   }, [products, data, dispatch, id]);
@@ -43,8 +45,10 @@ function Detail() {
     if (itemInCart) {
       dispatch({
         type: UPDATE_CART_QUANTITY,
-        _id: id,
-        purchaseQuantity: parseInt(itemInCart.purchaseQuantity) + 1
+        payload: {
+          id: id,
+          purchaseQuantity: parseInt(itemInCart.purchaseQuantity) + 1
+        }
       });
       idbPromise('cart', 'put', {
         ...itemInCart,
@@ -53,7 +57,7 @@ function Detail() {
     } else {
       dispatch({
         type: ADD_TO_CART,
-        product: { ...currentProduct, purchaseQuantity: 1 }
+        payload: { ...currentProduct, purchaseQuantity: 1 }
       });
       idbPromise('cart', 'put', {...currentProduct, purchaseQuantity: 1});
     }
@@ -62,14 +66,14 @@ function Detail() {
   const removeFromCart = () => {
     dispatch({
       type: REMOVE_FROM_CART,
-      _id: currentProduct._id
+      payload: currentProduct._id
     })
     idbPromise('cart', 'delete', {...currentProduct});
   }
 
   return (
     <>
-      {currentProduct ? (
+      {currentProduct && currentProduct._id ? (
         <div className="container my-1">
           <Link to="/">← Back to Products</Link>
 
@@ -82,7 +86,6 @@ function Detail() {
             <button onClick={addToCart}>Add to Cart</button>
             <button onClick={removeFromCart}>Remove from Cart</button>
           </p>
-
           <img
             src={`/images/${currentProduct.image}`}
             alt={currentProduct.name}

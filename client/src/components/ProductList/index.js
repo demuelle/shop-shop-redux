@@ -7,13 +7,18 @@ import ProductItem from "../ProductItem";
 import { QUERY_PRODUCTS } from "../../utils/queries";
 import spinner from "../../assets/spinner.gif";
 
-import { useStoreContext } from "../../utils/GlobalState";
+// import { useStoreContext } from "../../utils/GlobalState";
+import { useSelector, useDispatch } from "react-redux";
+
 import { UPDATE_PRODUCTS } from "../../utils/actions";
 
 function ProductList() {
-  const [state, dispatch] = useStoreContext();
+  // const [state, dispatch] = useStoreContext();
+  // const { currentCategory } = state;
 
-  const { currentCategory } = state;
+  const currentCategory = useSelector(state => state.categories.currentCategory);
+  const products = useSelector(state => state.products)
+  const dispatch = useDispatch();
 
   const { loading, data } = useQuery(QUERY_PRODUCTS);
 
@@ -23,7 +28,7 @@ function ProductList() {
       // let's store it in the global state object
       dispatch({
         type: UPDATE_PRODUCTS,
-        products: data.products,
+        payload: data.products,
       });
 
       // but let's also take each product and save it to IndexedDB using the helper function
@@ -32,11 +37,11 @@ function ProductList() {
       });
     } else if (!loading) {
       // since we're offline, get all of the data from the `products` store
-      idbPromise("products", "get").then((products) => {
+      idbPromise("products", "get").then((idbProducts) => {
         // use retrieved data to set global state for offline browsing
         dispatch({
           type: UPDATE_PRODUCTS,
-          products: products,
+          payload: idbProducts,
         });
       });
     }
@@ -44,10 +49,10 @@ function ProductList() {
 
   function filterProducts() {
     if (!currentCategory) {
-      return state.products;
+      return products;
     }
 
-    return state.products.filter(
+    return products.filter(
       (product) => product.category._id === currentCategory
     );
   }
@@ -55,7 +60,7 @@ function ProductList() {
   return (
     <div className="my-2">
       <h2>Our Products:</h2>
-      {state.products.length ? (
+      {products.length ? (
         <div className="flex-row">
           {filterProducts().map((product) => (
             <ProductItem

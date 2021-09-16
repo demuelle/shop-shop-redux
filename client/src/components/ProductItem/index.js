@@ -4,13 +4,14 @@ import { pluralize } from "../../utils/helpers";
 
 import { idbPromise } from "../../utils/helpers";
 
-import { useStoreContext } from "../../utils/GlobalState";
 import { ADD_TO_CART, UPDATE_CART_QUANTITY } from "../../utils/actions";
 
-function ProductItem(item) {
-  const [state, dispatch] = useStoreContext();
+import { useSelector, useDispatch } from "react-redux";
 
-  const { cart } = state;
+function ProductItem(item) {
+
+  const dispatch = useDispatch();
+  const cart = useSelector(state => state.cart.items)
 
   const addToCart = () => {
     // find the cart item with the matching id
@@ -20,8 +21,10 @@ function ProductItem(item) {
     if (itemInCart) {
       dispatch({
         type: UPDATE_CART_QUANTITY,
-        _id: _id,
-        purchaseQuantity: parseInt(itemInCart.purchaseQuantity) + 1,
+        payload: {
+          id: _id,
+          purchaseQuantity: parseInt(itemInCart.purchaseQuantity) + 1
+        }
       });
       idbPromise('cart', 'put', {
         ...itemInCart,
@@ -30,7 +33,7 @@ function ProductItem(item) {
     } else {
       dispatch({
         type: ADD_TO_CART,
-        product: { ...item, purchaseQuantity: 1 },
+        payload: { ...item, purchaseQuantity: 1 },
       });
       idbPromise('cart', 'put', {...item, purchaseQuantity: 1});
     }
