@@ -23,7 +23,7 @@ function Success() {
         });
       }
 
-      setTimeout(() => window.location.assign("http://localhost:3000"), 3000);
+      setTimeout(() => window.location.assign("https://shop-shop-redux-dan-mueller.herokuapp.com"), 3000);
     }
 
     saveOrder();
